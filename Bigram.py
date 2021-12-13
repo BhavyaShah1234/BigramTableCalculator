@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+smoothing = True
+
 n = int(input('ENTER NUMBER OF SENTENCES IN CORPUS: '))
 sentences = []
 
@@ -26,7 +28,12 @@ for i in range(len(unique)):
             if sentences[j][k] == unique[i]:
                 total_count[unique[i]] += 1
 
-print(total_count)
+print(f'WORD COUNT: {total_count}')
+
+v = 0
+for i in total_count:
+    v += total_count[i]
+print(f'V: {v}')
 
 matrix = np.zeros(shape=(len(unique), len(unique)))
 
@@ -40,9 +47,25 @@ for i in range(len(unique)):
                     matrix[i][j] += 1
 
 matrix = pd.DataFrame(matrix, columns=unique, index=unique)
+print(f'COUNT MATRIX:\n{matrix}')
 
+if smoothing:
+    smooth_matrix = np.zeros_like(matrix)
+    smooth_matrix = pd.DataFrame(smooth_matrix, columns=unique, index=unique)
+    for i in unique:
+        for j in unique:
+            if matrix[i][j] == 0:
+                smooth_matrix[i][j] = (matrix[i][j] + 1) / (total_count[j] + v)
+            else:
+                smooth_matrix[i][j] = matrix[i][j] / total_count[j]
+    print(f'SMOOTHING:\n{smooth_matrix}')
+    smooth_matrix.to_csv('bigram_probability_table_with_smoothing.csv')
+
+non_smooth_matrix = np.zeros_like(matrix)
+non_smooth_matrix = pd.DataFrame(non_smooth_matrix, columns=unique, index=unique)
 for i in unique:
     for j in unique:
-        matrix[i][j] = matrix[i][j] / total_count[j]
+        non_smooth_matrix[i][j] = matrix[i][j] / total_count[j]
+print(f'WITHOUT SMOOTHING:\n{non_smooth_matrix}')
 
-matrix.to_csv('bigram_probability_table.csv')
+non_smooth_matrix.to_csv('bigram_probability_table_without_smoothing.csv')
